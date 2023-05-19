@@ -1,0 +1,52 @@
+on quit:
+    clear {tpg.%player%}
+
+command /tpg [<player>]:
+    trigger:
+        if arg-1 is not set:
+            send "&c使用法: /tpg <テレポートしたいプレイヤー>" to player
+        else:
+            if arg-1 is player:
+                send "&c自分自身にテレポートを要求することはできません。" to player
+            else:
+                if {tpg.%arg-1%} is player:
+                    send "&cすでにリクエストが送信されています。" to player
+                else:
+                    send "&a%arg-1%さんにテレポートをリクエストしました。" to player
+                    send "&a5分以内に応答がない場合はキャンセルされます。" to player
+                    send "&e%player%さんにあなたの場所へのテレポートをリクエストされました。" to arg-1
+                    send "&a/allow (許可) &7&l| &c/deny (拒否)" to arg-1
+                    set {tpg.%arg-1%} to player
+                    set {_n} to 300
+                    loop 300 times:
+                        send action bar "&a許可がキャンセルされるまで%{_n}%秒前...." to player
+                        if {tpg.%arg-1%} is not player:
+                            set {_c} to true
+                            exit loop
+                        remove 1 from {_n}
+                        wait 1 second
+                    if {_c} is not set:
+                        send "&c5分以内に相手から応答がなかった、または別のプレイヤーがリクエストしたためキャンセルされました。" to player
+                        clear {tpg.%arg-1%}
+
+command /allow:
+    trigger:
+        if {tpg.%player%} is set:
+            if {tpg.%player%} is online:
+                send "&aテレポートを許可しました。" to player
+                send "&aテレポートが許可されました。" to {tpg.%player%}
+                teleport {tpg.%player%} to location of player
+                clear {tpg.%player%}
+            else:
+                send "&cそのプレイヤーは現在オンラインではありません。" to player
+        else:
+            send "&c現在テレポートは要求されていません。" to player
+
+command /deny:
+    trigger:
+        if {tpg.%player%} is set:
+            send "&aテレポートを拒否しました。" to player
+            send "&c%player%さんへのテレポートは拒否されました。" to {tpg.%player%}
+            clear {tpg.%player%}
+        else:
+            send "&c現在テレポートは要求されていません。" to player
