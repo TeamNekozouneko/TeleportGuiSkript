@@ -1,0 +1,2 @@
+# TeleportGuiSkript
+通称「tpg」であり指定したプレイヤーからの了承を得ることでその人の場所にテレポートができるSkript
