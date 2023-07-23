@@ -1,0 +1,95 @@
+options:
+    p: &6&lTPG &8&l» &r
+
+on quit:
+    clear {tpg.%player%}
+
+command /tpg [<player>]:
+    trigger:
+        if metadata value "tpgban" of player is true:
+            send "{@p}&cあなたはルール違反によりTPGの使用が禁止されています。"
+            play sound "block.note_block.bass" to the player
+        else:
+            if player's money >= 100:
+                if arg-1 is not set:
+                    send "{@p}&c/tpg <テレポートしたいプレイヤー>" to player
+                    play sound "block.note_block.bass" to the player
+                else:
+                    if arg-1 is player:
+                        send "{@p}&c自分自身にテレポートを要求することはできません。" to player
+                        play sound "block.note_block.bass" to the player
+                    else:
+                        if {tpg.%arg-1%} is player:
+                            send "{@p}&cすでにリクエストが送信されています。" to player
+                            play sound "block.note_block.bass" to the player
+                        else:
+                            send "{@p}&a%arg-1%さんにテレポートをリクエストしました。" to player
+                            send "&a5分以内に応答がない場合はキャンセルされます。" to player
+                            play sound "entity.experience_orb.pickup" to the player
+                            send "{@p}&e%player%さんにあなたの場所へのテレポートをリクエストされました。" to arg-1
+                            send "<run command:/allow>&a/allow(許可)<reset> &7&l| <run command:/deny>&c/deny(拒否)<reset> &7(JAVA版のみテキストクリック可能)" to arg-1
+                            play sound "entity.experience_orb.pickup" to the arg-1
+                            remove 100 from player's money
+                            send "&aあなたは所持金からテレポートに必要な100円を支払いました。"
+                            set {tpg.%arg-1%} to player
+                            set {_n} to 300
+                            loop 300 times:
+                                send action bar "&a許可がキャンセルされるまで%{_n}%秒前...." to player
+                                if {tpg.%arg-1%} is not player:
+                                    set {_c} to true
+                                    exit loop
+                                remove 1 from {_n}
+                                wait 1 second
+                            if {_c} is not set:
+                                send "{@p}&c5分以内に相手から応答がなかった、または別のプレイヤーがリクエストしたためキャンセルされました。" to player
+                                add 100 to player's money
+                                send "&a100円が補填されました。"
+                                play sound "block.note_block.bass" to the player
+                                clear {tpg.%arg-1%}
+            else:
+                send "{@p}&cあなたはテレポートに必要な金額を所持していません。(100円)"
+
+command /allow:
+    trigger:
+        if {tpg.%player%} is set:
+            if {tpg.%player%} is online:
+                send "{@p}&aテレポートを許可しました。" to player
+                send "{@p}&aテレポートが許可されました。" to {tpg.%player%}
+                play sound "entity.experience_orb.pickup" to the player
+                play sound "entity.experience_orb.pickup" to {tpg.%player%}
+                teleport {tpg.%player%} to location of player
+                clear {tpg.%player%}
+            else:
+                send "{@p}&cそのプレイヤーは現在オンラインではありません。" to player
+                play sound "block.note_block.bass" to the player
+        else:
+            send "{@p}&c現在テレポートは要求されていません。" to player
+            play sound "block.note_block.bass" to the player
+
+command /deny:
+    trigger:
+        if {tpg.%player%} is set:
+            send "{@p}&aテレポートを拒否しました。" to player
+            play sound "entity.experience_orb.pickup" to the player
+            send "{@p}&c%player%さんへのテレポートは拒否されました。" to {tpg.%player%}
+            play sound "block.note_block.bass" to {tpg.%player%}
+            add 100 to {tpg.%player%}'s money
+            send "&a100円が補填されました。" to {tpg.%player%}
+            clear {tpg.%player%}
+        else:
+            send "{@p}&c現在テレポートは要求されていません。" to player
+            play sound "block.note_block.bass" to the player
+
+command /tpg_ban [<offline player>]::
+    permission: admin
+    permission message: {@p}&cあなたにこのコマンドを実行する権限はありません。
+    trigger:
+        if arg-1 is set:
+            if metadata value "tpgban" of arg-1 is true:
+                set metadata value "tpgban" of arg-1 to false
+                send "{@p}&a%arg-1%のTPGBANを解除しました。"
+            else:
+                set metadata value "tpgban" of arg-1 to true
+                send "{@p}&a%arg-1%をTPGBAN設定しました。"
+        else if arg-1 is not set:
+            send "{@p}&c/tpg_ban <TPGを使えなくするプレイヤー>"
