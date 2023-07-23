@@ -7,7 +7,7 @@ on quit:
 command /tpg [<player>]:
     trigger:
         if metadata value "tpgban" of player is true:
-            send "{@p}&cあなたはルール違反によりTPGの使用が禁止されています。"
+            send "{@p}&cあなたはルール違反によりテレポートの使用が禁止されています。"
             play sound "block.note_block.bass" to the player
         else:
             if player's money >= 100:
@@ -24,13 +24,13 @@ command /tpg [<player>]:
                             play sound "block.note_block.bass" to the player
                         else:
                             send "{@p}&a%arg-1%さんにテレポートをリクエストしました。" to player
-                            send "&a5分以内に応答がない場合はキャンセルされます。" to player
+                            send "{@p}&a5分以内に応答がない場合はキャンセルされます。" to player
                             play sound "entity.experience_orb.pickup" to the player
                             send "{@p}&e%player%さんにあなたの場所へのテレポートをリクエストされました。" to arg-1
-                            send "<run command:/allow>&a/allow(許可)<reset> &7&l| <run command:/deny>&c/deny(拒否)<reset> &7(JAVA版のみテキストクリック可能)" to arg-1
+                            send "{@p}<run command:/allow>&a/allow(許可)<reset> &7&l| <run command:/deny>&c/deny(拒否)<reset> &7(JAVA版のみテキストクリック可能)" to arg-1
                             play sound "entity.experience_orb.pickup" to the arg-1
                             remove 100 from player's money
-                            send "&aあなたは所持金からテレポートに必要な100円を支払いました。"
+                            send "{@p}&aあなたは所持金からテレポートに必要な100円を支払いました。"
                             set {tpg.%arg-1%} to player
                             set {_n} to 300
                             loop 300 times:
@@ -43,7 +43,9 @@ command /tpg [<player>]:
                             if {_c} is not set:
                                 send "{@p}&c5分以内に相手から応答がなかった、または別のプレイヤーがリクエストしたためキャンセルされました。" to player
                                 add 100 to player's money
-                                send "&a100円が補填されました。"
+                                send "{@p}&a100円が補填されました。"
+                                set {_time} to now formatted as "yyyy年MM月dd日 HH:mm"
+                                add "&e%{_time}% %nl% &a%player%&7 5分経過-> &a%arg-1%&r%nl%" to {tpglog.%player%::*}
                                 play sound "block.note_block.bass" to the player
                                 clear {tpg.%arg-1%}
             else:
@@ -57,6 +59,8 @@ command /allow:
                 send "{@p}&aテレポートが許可されました。" to {tpg.%player%}
                 play sound "entity.experience_orb.pickup" to the player
                 play sound "entity.experience_orb.pickup" to {tpg.%player%}
+                set {_time} to now formatted as "yyyy年MM月dd日 HH:mm"
+                add "&e%{_time}% %nl% &a%{tpg.%player%}% &7許可-> &a%player%&r%nl%" to {tpglog.%{tpg.%player%}%::*}
                 teleport {tpg.%player%} to location of player
                 clear {tpg.%player%}
             else:
@@ -73,8 +77,10 @@ command /deny:
             play sound "entity.experience_orb.pickup" to the player
             send "{@p}&c%player%さんへのテレポートは拒否されました。" to {tpg.%player%}
             play sound "block.note_block.bass" to {tpg.%player%}
+            set {_time} to now formatted as "yyyy年MM月dd日 HH:mm"
+            add "&e%{_time}% %nl%&a%{tpg.%player%}% &7拒否-> &a%player%&r%nl%" to {tpglog.%{tpg.%player%}%::*}
             add 100 to {tpg.%player%}'s money
-            send "&a100円が補填されました。" to {tpg.%player%}
+            send "{@p}&a100円が補填されました。" to {tpg.%player%}
             clear {tpg.%player%}
         else:
             send "{@p}&c現在テレポートは要求されていません。" to player
@@ -93,3 +99,16 @@ command /tpg_ban [<offline player>]::
                 send "{@p}&a%arg-1%をTPGBAN設定しました。"
         else if arg-1 is not set:
             send "{@p}&c/tpg_ban <TPGを使えなくするプレイヤー>"
+
+command /tpg_log [<offline player>]::
+    permission: admin
+    permission message: {@p}&cあなたにこのコマンドを実行する権限はありません。
+    trigger:
+        send "{@p}&e&n%arg-1%&6のテレポート履歴はこちらです。"
+        send "&7"
+        if {tpglog.%player%::*} is not set:
+            send "&aテレポート履歴はありません。"
+            play sound "block.note_block.bass" to {tpg.%player%}
+        else:
+            send "%{tpglog.%player%::*}%"
+            play sound "entity.experience_orb.pickup" to the player
